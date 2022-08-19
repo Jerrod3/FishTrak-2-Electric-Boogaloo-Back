@@ -1,5 +1,5 @@
 import uvicorn
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from pymongo import MongoClient
 from routes import router
 from dotenv import dotenv_values
