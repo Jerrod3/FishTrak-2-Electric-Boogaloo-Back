@@ -1,6 +1,6 @@
 import uuid
 from typing import Optional
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 
 """
 Resource: https://www.mongodb.com/languages/python/pymongo-tutorial
