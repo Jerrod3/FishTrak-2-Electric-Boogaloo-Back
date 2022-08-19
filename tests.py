@@ -64,9 +64,89 @@ class FishermanTests(unittest.TestCase):
         requests.delete(f"{HOST}/fishermen/{_id}")
 
 
+class LureTests(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        # make two post requests to give the tests some data to work with
+        lure1 = {
+                "name": "Senko",
+                "type": "Drop Shot",
+                "color": "purple",
+                "weight": 0.25
+            }
+        lure2 = {  # no weight field, as it is optional
+                "name": "Daredevil",
+                "type": "flying",
+                "color": "red"
+            }
+        for lure in [lure1, lure2]:
+            post_data('lures', lure)
+
+    def test_post(self):
+        lure = {  # no color or weight field, as it is optional
+                "name": "worm",
+                "type": "natural",
+            }
+        res = post_data("lures", lure)
+        self.assertEqual(201, res.status_code)
+        self.assertEqual(lure.get('name'), res.json().get('name'))
+        _id = res.json().get('_id')
+
+        # everything must have check out, so the new entry will be removed
+        res = requests.delete(f"{HOST}/lures/{_id}")
+        self.assertEqual(204, res.status_code)
+
+    def test_get_all(self):
+        # GET
+        res = requests.get(f"{HOST}/lures")
+        self.assertEqual(200, res.status_code)
+        self.assertIsInstance(res.json(), list)
+
+    def test_get_by_id(self):
+        _id, code = find_id_by_name('Senko', 'lures')
+        self.assertEqual(200, code)
+        res = requests.get(f"{HOST}/lures/{_id}")
+        self.assertEqual(200, res.status_code)
+        name = f"{res.json().get('name')}"
+        self.assertEqual("Senko", name)
+
+    def test_delete(self):
+        _id, code = find_id_by_name('Daredevil', 'lures')
+        self.assertEqual(200, code)
+        res = requests.delete(f"{HOST}/lures/{_id}")
+        self.assertEqual(204, res.status_code)
+
+    # UPDATING IS BROKEN DUE TO REQUIRED FIELDS
+    # def test_put(self):
+    #     _id, _ = find_id_by_name('Senko', 'lures')
+    #     res = requests.put(f"{HOST}/lures/{_id}", json={'weight': 1.55})
+    #     print(res.json())
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        _id, _ = find_id_by_name('Senko', 'lures')
+        requests.delete(f"{HOST}/lures/{_id}")
+
+
 def post_data(route: str, data: dict) -> requests.Response:
     res = requests.post(f"{HOST}/{route}", json=data)
     return res
+
+
+def find_id_by_name(name: str, route: str) -> tuple[str, int]:
+    res = requests.get(f"{HOST}/{route}")
+    found_lure = None
+    data: list = res.json()
+    for lure in data:
+        if lure.get('name') == name:
+            found_lure = lure
+            break
+
+    if found_lure is None:
+        raise Exception(f"No matching {route.title()} was found")
+
+    return found_lure.get('_id'), res.status_code
 
 
 def find_id_by_email(email: str, route: str) -> tuple[str, int]:
@@ -78,6 +158,7 @@ def find_id_by_email(email: str, route: str) -> tuple[str, int]:
     for entity in data:
         if entity.get('email') == email:
             found_entity = entity
+            break
 
     if found_entity is None:
         raise Exception(f"No matching {route.title()} was found")

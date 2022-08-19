@@ -7,7 +7,6 @@ Resource: https://www.mongodb.com/languages/python/pymongo-tutorial
 """
 
 
-# Models
 class Fisherman(BaseModel):
     id: str = Field(default_factory=uuid.uuid4, alias="_id")
     first: str = Field(...)
