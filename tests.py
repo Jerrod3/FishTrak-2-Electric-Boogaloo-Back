@@ -38,7 +38,7 @@ class FishermanTests(unittest.TestCase):
         self.assertIsInstance(res.json(), list)
 
     def test_get_by_id(self):
-        _id, code = find_id_by_email('ljensen@tobi.dog', 'fishermen')
+        _id, code = find_id_by_param('email', 'ljensen@tobi.dog', 'fishermen')
         self.assertEqual(200, code)
         res = requests.get(f"{HOST}/fishermen/{_id}")
         self.assertEqual(200, res.status_code)
@@ -46,13 +46,13 @@ class FishermanTests(unittest.TestCase):
         self.assertEqual("Lucas Jensen", name)
 
     def test_delete(self):
-        _id, code = find_id_by_email('jlepper@basil.dog', 'fishermen')
+        _id, code = find_id_by_param('email', 'jlepper@basil.dog', 'fishermen')
         self.assertEqual(200, code)
         res = requests.delete(f"{HOST}/fishermen/{_id}")
         self.assertEqual(204, res.status_code)
 
     def test_put(self):
-        _id, _ = find_id_by_email('ljensen@tobi.dog', 'fishermen')
+        _id, _ = find_id_by_param('email', 'ljensen@tobi.dog', 'fishermen')
         res = requests.put(f"{HOST}/fishermen/{_id}", json={'first': 'Lucas Paul'})
         self.assertEqual("Lucas Paul Jensen", f"{res.json().get('first')} {res.json().get('last')}")
 
@@ -60,7 +60,7 @@ class FishermanTests(unittest.TestCase):
     def tearDownClass(cls) -> None:
         # the above tests should only leave Lucas Jensen in the fishermen collection
         # It should be removed to restore the db to its pre-test state
-        _id, _ = find_id_by_email('ljensen@tobi.dog', 'fishermen')
+        _id, _ = find_id_by_param('email', 'ljensen@tobi.dog', 'fishermen')
         requests.delete(f"{HOST}/fishermen/{_id}")
 
 
@@ -72,8 +72,7 @@ class LureTests(unittest.TestCase):
         lure1 = {
                 "name": "Senko",
                 "type": "Drop Shot",
-                "color": "purple",
-                "weight": 0.25
+                "color": "purple"
             }
         lure2 = {  # no weight field, as it is optional
                 "name": "Daredevil",
@@ -88,7 +87,7 @@ class LureTests(unittest.TestCase):
                 "name": "worm",
                 "type": "natural",
             }
-        res = post_data("lures", lure)
+        res = post_data('lures', lure)
         self.assertEqual(201, res.status_code)
         self.assertEqual(lure.get('name'), res.json().get('name'))
         _id = res.json().get('_id')
@@ -104,7 +103,7 @@ class LureTests(unittest.TestCase):
         self.assertIsInstance(res.json(), list)
 
     def test_get_by_id(self):
-        _id, code = find_id_by_name('Senko', 'lures')
+        _id, code = find_id_by_param('name', 'Senko', 'lures')
         self.assertEqual(200, code)
         res = requests.get(f"{HOST}/lures/{_id}")
         self.assertEqual(200, res.status_code)
@@ -112,20 +111,26 @@ class LureTests(unittest.TestCase):
         self.assertEqual("Senko", name)
 
     def test_delete(self):
-        _id, code = find_id_by_name('Daredevil', 'lures')
+        _id, code = find_id_by_param('name', 'Daredevil', 'lures')
         self.assertEqual(200, code)
         res = requests.delete(f"{HOST}/lures/{_id}")
         self.assertEqual(204, res.status_code)
 
-    # UPDATING IS BROKEN DUE TO REQUIRED FIELDS
-    # def test_put(self):
-    #     _id, _ = find_id_by_name('Senko', 'lures')
-    #     res = requests.put(f"{HOST}/lures/{_id}", json={'weight': 1.55})
-    #     print(res.json())
+    def test_put(self):
+        _id, _ = find_id_by_param('name', 'Senko', 'lures')
+        lure = requests.get(f"{HOST}/lures/{_id}").json()
+        self.assertEqual('purple', lure.get('color'))
+        self.assertIsNone(lure.get('weight'))
+
+        requests.put(f"{HOST}/lures/{_id}", json={"color": "white", "weight": 1.2})
+
+        lure = requests.get(f"{HOST}/lures/{_id}").json()
+        self.assertEqual('white', lure.get('color'))
+        self.assertEqual(1.2, lure.get('weight'))
 
     @classmethod
     def tearDownClass(cls) -> None:
-        _id, _ = find_id_by_name('Senko', 'lures')
+        _id, _ = find_id_by_param('name', 'Senko', 'lures')
         requests.delete(f"{HOST}/lures/{_id}")
 
 
@@ -134,36 +139,23 @@ def post_data(route: str, data: dict) -> requests.Response:
     return res
 
 
-def find_id_by_name(name: str, route: str) -> tuple[str, int]:
+def find_id_by_param(param: str, value: str, route: str) -> tuple[str, int]:
+    """
+    Finds and returns the first item in a collection that matches the provided parameter
+    Also returns the status code of the request. Values are returned as tuple.
+    """
     res = requests.get(f"{HOST}/{route}")
-    found_lure = None
+    found_item = None
     data: list = res.json()
-    for lure in data:
-        if lure.get('name') == name:
-            found_lure = lure
+    for item in data:
+        if item.get(param) == value:
+            found_item = item
             break
 
-    if found_lure is None:
+    if found_item is None:
         raise Exception(f"No matching {route.title()} was found")
 
-    return found_lure.get('_id'), res.status_code
-
-
-def find_id_by_email(email: str, route: str) -> tuple[str, int]:
-    # first get all data to find the desired _id
-    res = requests.get(f"{HOST}/{route}")
-
-    found_entity = None
-    data = res.json()
-    for entity in data:
-        if entity.get('email') == email:
-            found_entity = entity
-            break
-
-    if found_entity is None:
-        raise Exception(f"No matching {route.title()} was found")
-
-    return found_entity.get('_id'), res.status_code
+    return found_item.get('_id'), res.status_code
 
 
 if __name__ == '__main__':

@@ -28,10 +28,10 @@ class Lure(BaseModel):
 
 
 class LureUpdate(BaseModel):
-    name: Optional[str] = Field(...)
-    type: Optional[str] = Field(...)
-    color: Optional[str] = Field(...)
-    weight: Optional[float] = Field(...)
+    name: Optional[str]
+    type: Optional[str]
+    color: Optional[str]
+    weight: Optional[float]
 
     class Config:
         allow_population_by_field_name = True
