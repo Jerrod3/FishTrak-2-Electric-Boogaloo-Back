@@ -45,7 +45,7 @@ def delete_lure(id: str, request: Request, response: Response):
 
 
 @router.put("/{id}", response_description="Update a lure", response_model=Lure)
-def update_book(id: str, request: Request, lure: LureUpdate = Body(...)):
+def update_lure(id: str, request: Request, lure: LureUpdate = Body(...)):
     lure = {k: v for k, v in lure.dict().items() if v is not None}
     if len(lure) >= 1:
         update_result = request.app.database[COLL].update_one(

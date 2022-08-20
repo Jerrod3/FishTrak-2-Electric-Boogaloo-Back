@@ -45,7 +45,7 @@ def delete_fisherman(id: str, request: Request, response: Response):
 
 
 @router.put("/{id}", response_description="Update a fisherman", response_model=Fisherman)
-def update_book(id: str, request: Request, fisherman: FishermanUpdate = Body(...)):
+def update_fisherman(id: str, request: Request, fisherman: FishermanUpdate = Body(...)):
     fisherman = {k: v for k, v in fisherman.dict().items() if v is not None}
     if len(fisherman) >= 1:
         update_result = request.app.database[COLL].update_one(

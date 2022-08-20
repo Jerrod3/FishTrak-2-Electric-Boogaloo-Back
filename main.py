@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from pymongo import MongoClient
 from routes.fishermen import router as fishermen_router
 from routes.lures import router as lures_router
+from routes.water_body import router as water_bodies_router
 from dotenv import dotenv_values
 
 config = dotenv_values(".env")
@@ -10,7 +11,8 @@ app = FastAPI()
 
 routers = {
     'fishermen': fishermen_router,
-    'lures': lures_router
+    'lures': lures_router,
+    'bodies': water_bodies_router
 }
 
 

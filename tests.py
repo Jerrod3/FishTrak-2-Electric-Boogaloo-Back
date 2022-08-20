@@ -33,7 +33,7 @@ class FishermanTests(unittest.TestCase):
 
     def test_get_all(self):
         # GET
-        res = requests.get(f"{HOST}/fishermen")
+        res = requests.get(f"{HOST}/fishermen/")
         self.assertEqual(200, res.status_code)
         self.assertIsInstance(res.json(), list)
 
@@ -98,7 +98,7 @@ class LureTests(unittest.TestCase):
 
     def test_get_all(self):
         # GET
-        res = requests.get(f"{HOST}/lures")
+        res = requests.get(f"{HOST}/lures/")
         self.assertEqual(200, res.status_code)
         self.assertIsInstance(res.json(), list)
 
@@ -134,8 +134,26 @@ class LureTests(unittest.TestCase):
         requests.delete(f"{HOST}/lures/{_id}")
 
 
+class WaterBodiesTest(unittest.TestCase):
+
+    def test_post(self):
+        body = {
+            "name": "Gull Lake",
+            "is_freshwater": True,
+            "is_stocked": False,
+            "location": (73.856077, 40.848447)
+        }
+        res = requests.post(f"{HOST}/bodies/", json=body)
+        self.assertEqual(201, res.status_code)
+
+        _id = res.json().get('_id')
+
+        res = requests.delete(f"{HOST}/bodies/{_id}")
+        self.assertEqual(204, res.status_code)
+
+
 def post_data(route: str, data: dict) -> requests.Response:
-    res = requests.post(f"{HOST}/{route}", json=data)
+    res = requests.post(f"{HOST}/{route}/", json=data)
     return res
 
 
@@ -144,7 +162,7 @@ def find_id_by_param(param: str, value: str, route: str) -> tuple[str, int]:
     Finds and returns the first item in a collection that matches the provided parameter
     Also returns the status code of the request. Values are returned as tuple.
     """
-    res = requests.get(f"{HOST}/{route}")
+    res = requests.get(f"{HOST}/{route}/")
     found_item = None
     data: list = res.json()
     for item in data:
