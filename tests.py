@@ -70,23 +70,23 @@ class LureTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         # make two post requests to give the tests some data to work with
         lure1 = {
-                "name": "Senko",
-                "type": "Drop Shot",
-                "color": "purple"
-            }
+            "name": "Senko",
+            "type": "Drop Shot",
+            "color": "purple"
+        }
         lure2 = {  # no weight field, as it is optional
-                "name": "Daredevil",
-                "type": "flying",
-                "color": "red"
-            }
+            "name": "Daredevil",
+            "type": "flying",
+            "color": "red"
+        }
         for lure in [lure1, lure2]:
             post_data('lures', lure)
 
     def test_post(self):
         lure = {  # no color or weight field, as it is optional
-                "name": "worm",
-                "type": "natural",
-            }
+            "name": "worm",
+            "type": "natural",
+        }
         res = post_data('lures', lure)
         self.assertEqual(201, res.status_code)
         self.assertEqual(lure.get('name'), res.json().get('name'))
@@ -136,6 +136,38 @@ class LureTests(unittest.TestCase):
 
 class WaterBodiesTest(unittest.TestCase):
 
+    @classmethod
+    def setUpClass(cls) -> None:
+        # make two post requests to give the tests some data to work with
+        body_1 = {
+            "name": "St. Mary's Lake",
+            "is_freshwater": True,
+            "is_stocked": False,
+            "location": (42.378229, -85.181098)
+        }
+        body_2 = {
+            "name": "Kzoo River",
+            "is_freshwater": True,
+            "is_stocked": True
+        }
+        for body in [body_1, body_2]:
+            post_data('bodies', body)
+
+    def test_put(self):
+        _id, _ = find_id_by_param('name', "Kzoo River", 'bodies')
+        res = requests.get(f"{HOST}/bodies/{_id}")
+
+        requests.put(f"{HOST}/bodies/{_id}", json={"is_stocked": False})
+        requests.put(f"{HOST}/bodies/{_id}", json={"location": (42.349159, 85.268510)})
+        self.assertEqual(200, res.status_code)
+
+        res = requests.get(f"{HOST}/bodies/{_id}")
+        self.assertEqual(200, res.status_code)
+
+        # test for a 3 dimensional location to be rejected
+        res = requests.put(f"{HOST}/bodies/{_id}", json={"location": (42.3, 85.2, 36)})
+        self.assertEqual(400, res.status_code)
+
     def test_post(self):
         body = {
             "name": "Gull Lake",
@@ -150,6 +182,18 @@ class WaterBodiesTest(unittest.TestCase):
 
         res = requests.delete(f"{HOST}/bodies/{_id}")
         self.assertEqual(204, res.status_code)
+
+    def test_delete(self):
+        _id, _ = find_id_by_param('name', "St. Mary's Lake", 'bodies')
+        res = requests.delete(f"{HOST}/bodies/{_id}")
+        self.assertEqual(204, res.status_code)
+        with self.assertRaises(IDNotFoundError):
+            find_id_by_param('name', "St. Mary's Lake", 'bodies')
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        _id, _ = find_id_by_param('name', 'Kzoo River', 'bodies')
+        requests.delete(f"{HOST}/bodies/{_id}")
 
 
 def post_data(route: str, data: dict) -> requests.Response:
@@ -171,9 +215,13 @@ def find_id_by_param(param: str, value: str, route: str) -> tuple[str, int]:
             break
 
     if found_item is None:
-        raise Exception(f"No matching {route.title()} was found")
+        raise IDNotFoundError(f"No matching {route.title()} was found")
 
     return found_item.get('_id'), res.status_code
+
+
+class IDNotFoundError(Exception):
+    pass
 
 
 if __name__ == '__main__':

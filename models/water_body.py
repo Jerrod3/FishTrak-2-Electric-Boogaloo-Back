@@ -39,7 +39,7 @@ class WaterBodyUpdate(BaseModel):
     name: Optional[str]
     is_freshwater: Optional[bool]
     is_stocked: Optional[bool]
-    location: Optional[dict] = Field({"type": "Point", "coordinates": ...})
+    location: Optional[tuple]
 
     class Config:
         allow_population_by_field_name = True

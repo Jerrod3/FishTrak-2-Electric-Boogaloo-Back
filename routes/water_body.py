@@ -53,6 +53,13 @@ def delete_body(id: str, request: Request, response: Response):
 @router.put("/{id}", response_description="Update a water body", response_model=WaterBody)
 def update_body(id: str, request: Request, body: WaterBodyUpdate = Body(...)):
     body = {k: v for k, v in body.dict().items() if v is not None}
+
+    if 'location' in body:
+        # verify coordinates
+        coords = body.get('location')
+        if coords and len(coords) != 2:
+            raise HTTPException(400, f"the provided Coordinates: {coords} are invalid. Should be (longitude, latitude)")
+
     if len(body) >= 1:
         update_result = request.app.database[COLL].update_one(
             {"_id": id}, {"$set": body}
