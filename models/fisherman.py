@@ -12,7 +12,7 @@ class Fisherman(BaseModel):
     first: str = Field(...)
     last: str = Field(...)
     email: EmailStr = Field(...)
-    caught_fish_ids: Optional[list] = Field(default=[])
+    caught_species_ids: Optional[list] = Field(default=[])
 
     class Config:
         allow_population_by_field_name = True
@@ -22,7 +22,7 @@ class Fisherman(BaseModel):
                 "first": "Jerrod",
                 "last": "Lepper",
                 "email": "jlepper@basil.dog",
-                "caught_fish_ids": ["id_1", "id_2"]
+                "caught_species_ids": ["id_1", "id_2"]
             }
         }
 
@@ -31,7 +31,7 @@ class FishermanUpdate(BaseModel):
     first: Optional[str]
     last: Optional[str]
     email: Optional[str]
-    caught_fish_ids: Optional[list]
+    caught_species_ids: Optional[list]
 
     class Config:
         schema_extra = {
@@ -39,6 +39,6 @@ class FishermanUpdate(BaseModel):
                 "first": "Jerrod",
                 "last": "Lepper",
                 "email": "jlepper@basil.cat",
-                "caught_fish_ids": ["id_1", "id_2", "id_3"]
+                "caught_species_ids": ["id_1", "id_2", "id_3"]
             }
         }

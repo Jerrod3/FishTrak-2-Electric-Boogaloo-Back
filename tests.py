@@ -5,6 +5,8 @@ HOST = "http://127.0.0.1:8000"  # for local development and testing
 
 
 class FishermanTests(unittest.TestCase):
+    path = 'fishermen'
+    ids = []
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -16,7 +18,14 @@ class FishermanTests(unittest.TestCase):
                       "last": "Jensen",
                       "email": "ljensen@tobi.dog"}
         for fisherman in [fisherman1, fisherman2]:
-            post_data('fishermen', fisherman)
+            res: requests.Response = post_data(cls.path, fisherman)
+            cls.ids.append(res.json().get('_id'))
+
+    def test_catch_fish(self):
+        # need to add backend logic for adding a species to a fisherman's caught_species array
+        # https://www.mongodb.com/docs/manual/reference/operator/update/addToSet/
+        # not sure of the best way to handle this
+        pass
 
     def test_post(self):
         fisherman = {"first": "Margarite",
@@ -49,6 +58,7 @@ class FishermanTests(unittest.TestCase):
         _id, code = find_id_by_param('email', 'jlepper@basil.dog', 'fishermen')
         self.assertEqual(200, code)
         res = requests.delete(f"{HOST}/fishermen/{_id}")
+        self.ids.remove(_id)
         self.assertEqual(204, res.status_code)
 
     def test_put(self):
@@ -194,6 +204,50 @@ class WaterBodiesTest(unittest.TestCase):
     def tearDownClass(cls) -> None:
         _id, _ = find_id_by_param('name', 'Kzoo River', 'bodies')
         requests.delete(f"{HOST}/bodies/{_id}")
+
+
+class SpeciesTest(unittest.TestCase):
+    path = 'species'
+    ids = []
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        species_1 = {
+            "name": "River Trout",
+            "description": "A happy little river trout"
+        }
+        species_2 = {
+            "name": "Striped Bass",
+        }
+        for species in [species_1, species_2]:
+            res = post_data(cls.path, species)
+            cls.ids.append(res.json().get('_id'))
+
+    def test_get_all(self):
+        res = requests.get(f"{HOST}/{self.path}")
+        self.assertEqual(200, res.status_code)
+
+    def test_post(self):
+        species = {
+            "name": "Brown Trout",
+            "description": "A happy little brown trout"
+        }
+
+        # post the new species
+        res: requests.Response = requests.post(f"{HOST}/{self.path}", json=species)
+        _id = res.json().get('_id')
+        self.ids.append(_id)
+        self.assertEqual(201, res.status_code)
+
+        # ensure it is in the db
+        res: requests.Response = requests.get(f"{HOST}/{self.path}/{_id}")
+        self.assertEqual(200, res.status_code)
+        self.assertTrue(res.json().get('name'), 'Brown Trout')
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        for _id in cls.ids:
+            requests.delete(f"{HOST}/{cls.path}/{_id}")
 
 
 def post_data(route: str, data: dict) -> requests.Response:

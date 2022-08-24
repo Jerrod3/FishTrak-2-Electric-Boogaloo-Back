@@ -1,18 +1,21 @@
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, APIRouter
 from pymongo import MongoClient
 from routes.fishermen import router as fishermen_router
 from routes.lures import router as lures_router
 from routes.water_body import router as water_bodies_router
+from routes.species import router as species_router
 from dotenv import dotenv_values
+
 
 config = dotenv_values(".env")
 app = FastAPI()
 
-routers = {
+routers: dict[str: APIRouter] = {
     'fishermen': fishermen_router,
     'lures': lures_router,
-    'bodies': water_bodies_router
+    'bodies': water_bodies_router,
+    'species': species_router
 }
 
 
