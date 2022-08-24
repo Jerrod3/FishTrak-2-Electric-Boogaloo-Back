@@ -1,4 +1,5 @@
 import uvicorn
+import os
 from fastapi import FastAPI, APIRouter
 from pymongo import MongoClient
 from routes.fishermen import router as fishermen_router
@@ -8,7 +9,17 @@ from routes.species import router as species_router
 from dotenv import dotenv_values
 
 
-config = dotenv_values(".env")
+# set environmental variables based on location of Secrets
+if os.path.exists('.env'):
+    print("reading from .env file!")
+    config = dotenv_values(".env")
+    ATLAS_URI = config["ATLAS_URI"]
+    ATLAS_DB = config["DB_NAME"]
+else:
+    print("No .env file found. Hopefully the variables exist!")
+    ATLAS_URI = os.getenv("ATLAS_URI")
+    ATLAS_DB = os.getenv("DB_NAME")
+
 app = FastAPI()
 
 routers: dict[str: APIRouter] = {

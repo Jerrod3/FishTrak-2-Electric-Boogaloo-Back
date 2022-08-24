@@ -1,25 +1,25 @@
 import unittest
 import requests
+from requests import Response
+
 
 HOST = "http://127.0.0.1:8000"  # for local development and testing
 
 
 class FishermanTests(unittest.TestCase):
-    path = 'fishermen'
+    route = 'fishermen'
     ids = []
 
     @classmethod
     def setUpClass(cls) -> None:
         # make two post requests to give the tests some data to work with
-        fisherman1 = {"first": "Jerrod",
-                      "last": "Lepper",
-                      "email": "jlepper@basil.dog"}
-        fisherman2 = {"first": "Lucas",
-                      "last": "Jensen",
-                      "email": "ljensen@tobi.dog"}
-        for fisherman in [fisherman1, fisherman2]:
-            res: requests.Response = post_data(cls.path, fisherman)
-            cls.ids.append(res.json().get('_id'))
+        fisherman_1 = {"first": "Jerrod",
+                       "last": "Lepper",
+                       "email": "jlepper@basil.dog"}
+        fisherman_2 = {"first": "Lucas",
+                       "last": "Jensen",
+                       "email": "ljensen@tobi.dog"}
+        post_sample(cls.route, [fisherman_1, fisherman_2], cls.ids)
 
     def test_catch_fish(self):
         # need to add backend logic for adding a species to a fisherman's caught_species array
@@ -31,25 +31,23 @@ class FishermanTests(unittest.TestCase):
         fisherman = {"first": "Margarite",
                      "last": "Waddell",
                      "email": "mwaddell@carol.cat"}
-        res = post_data("fishermen", fisherman)
+        res: Response = post_data(self.route, fisherman)
+        _id = res.json().get('_id')
+        self.ids.append(_id)
         self.assertEqual(201, res.status_code)
         self.assertEqual(fisherman.get('email'), res.json().get('email'))
-        _id = res.json().get('_id')
 
-        # everything must have check out, so the new entry will be removed
-        res = requests.delete(f"{HOST}/fishermen/{_id}")
-        self.assertEqual(204, res.status_code)
+        res: Response = requests.get(f"{HOST}/{self.route}/{_id}")
+        self.assertEqual(fisherman.get('email'), res.json().get('email'))
 
     def test_get_all(self):
-        # GET
-        res = requests.get(f"{HOST}/fishermen/")
+        res = requests.get(f"{HOST}/{self.route}/")
         self.assertEqual(200, res.status_code)
-        self.assertIsInstance(res.json(), list)
 
     def test_get_by_id(self):
-        _id, code = find_id_by_param('email', 'ljensen@tobi.dog', 'fishermen')
+        _id, code = find_id_by_param('email', 'ljensen@tobi.dog', self.route)
         self.assertEqual(200, code)
-        res = requests.get(f"{HOST}/fishermen/{_id}")
+        res = requests.get(f"{HOST}/{self.route}/{_id}")
         self.assertEqual(200, res.status_code)
         name = f"{res.json().get('first')} {res.json().get('last')}"
         self.assertEqual("Lucas Jensen", name)
@@ -68,36 +66,34 @@ class FishermanTests(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls) -> None:
-        # the above tests should only leave Lucas Jensen in the fishermen collection
-        # It should be removed to restore the db to its pre-test state
-        _id, _ = find_id_by_param('email', 'ljensen@tobi.dog', 'fishermen')
-        requests.delete(f"{HOST}/fishermen/{_id}")
+        clear_db(cls.ids, cls.route)
 
 
 class LureTests(unittest.TestCase):
+    route = 'lures'
+    ids = []
 
     @classmethod
     def setUpClass(cls) -> None:
         # make two post requests to give the tests some data to work with
-        lure1 = {
+        lure_1 = {
             "name": "Senko",
             "type": "Drop Shot",
             "color": "purple"
         }
-        lure2 = {  # no weight field, as it is optional
+        lure_2 = {  # no weight field, as it is optional
             "name": "Daredevil",
             "type": "flying",
             "color": "red"
         }
-        for lure in [lure1, lure2]:
-            post_data('lures', lure)
+        post_sample(cls.route, [lure_1, lure_2], cls.ids)
 
     def test_post(self):
         lure = {  # no color or weight field, as it is optional
             "name": "worm",
             "type": "natural",
         }
-        res = post_data('lures', lure)
+        res = post_data(self.route, lure)
         self.assertEqual(201, res.status_code)
         self.assertEqual(lure.get('name'), res.json().get('name'))
         _id = res.json().get('_id')
@@ -145,6 +141,8 @@ class LureTests(unittest.TestCase):
 
 
 class WaterBodiesTest(unittest.TestCase):
+    route = 'bodies'
+    ids = []
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -160,22 +158,21 @@ class WaterBodiesTest(unittest.TestCase):
             "is_freshwater": True,
             "is_stocked": True
         }
-        for body in [body_1, body_2]:
-            post_data('bodies', body)
+        post_sample(cls.route, [body_1, body_2], cls.ids)
 
     def test_put(self):
         _id, _ = find_id_by_param('name', "Kzoo River", 'bodies')
-        res = requests.get(f"{HOST}/bodies/{_id}")
+        res = requests.get(f"{HOST}/{self.route}/{_id}")
 
-        requests.put(f"{HOST}/bodies/{_id}", json={"is_stocked": False})
-        requests.put(f"{HOST}/bodies/{_id}", json={"location": (42.349159, 85.268510)})
+        requests.put(f"{HOST}/{self.route}/{_id}", json={"is_stocked": False})
+        requests.put(f"{HOST}/{self.route}/{_id}", json={"location": (42.349159, 85.268510)})
         self.assertEqual(200, res.status_code)
 
-        res = requests.get(f"{HOST}/bodies/{_id}")
+        res = requests.get(f"{HOST}/{self.route}/{_id}")
         self.assertEqual(200, res.status_code)
 
         # test for a 3 dimensional location to be rejected
-        res = requests.put(f"{HOST}/bodies/{_id}", json={"location": (42.3, 85.2, 36)})
+        res = requests.put(f"{HOST}/{self.route}/{_id}", json={"location": (42.3, 85.2, 36)})
         self.assertEqual(400, res.status_code)
 
     def test_post(self):
@@ -187,27 +184,23 @@ class WaterBodiesTest(unittest.TestCase):
         }
         res = requests.post(f"{HOST}/bodies/", json=body)
         self.assertEqual(201, res.status_code)
-
-        _id = res.json().get('_id')
-
-        res = requests.delete(f"{HOST}/bodies/{_id}")
-        self.assertEqual(204, res.status_code)
+        self.ids.append(res.json().get('_id'))
 
     def test_delete(self):
         _id, _ = find_id_by_param('name', "St. Mary's Lake", 'bodies')
         res = requests.delete(f"{HOST}/bodies/{_id}")
+        self.ids.remove(_id)
         self.assertEqual(204, res.status_code)
         with self.assertRaises(IDNotFoundError):
             find_id_by_param('name', "St. Mary's Lake", 'bodies')
 
     @classmethod
     def tearDownClass(cls) -> None:
-        _id, _ = find_id_by_param('name', 'Kzoo River', 'bodies')
-        requests.delete(f"{HOST}/bodies/{_id}")
+        clear_db(cls.ids, cls.route)
 
 
 class SpeciesTest(unittest.TestCase):
-    path = 'species'
+    route = 'species'
     ids = []
 
     @classmethod
@@ -219,12 +212,10 @@ class SpeciesTest(unittest.TestCase):
         species_2 = {
             "name": "Striped Bass",
         }
-        for species in [species_1, species_2]:
-            res = post_data(cls.path, species)
-            cls.ids.append(res.json().get('_id'))
+        post_sample(cls.route, [species_1, species_2], cls.ids)
 
     def test_get_all(self):
-        res = requests.get(f"{HOST}/{self.path}")
+        res = requests.get(f"{HOST}/{self.route}")
         self.assertEqual(200, res.status_code)
 
     def test_post(self):
@@ -234,20 +225,30 @@ class SpeciesTest(unittest.TestCase):
         }
 
         # post the new species
-        res: requests.Response = requests.post(f"{HOST}/{self.path}", json=species)
+        res: requests.Response = requests.post(f"{HOST}/{self.route}/", json=species)
         _id = res.json().get('_id')
         self.ids.append(_id)
         self.assertEqual(201, res.status_code)
 
         # ensure it is in the db
-        res: requests.Response = requests.get(f"{HOST}/{self.path}/{_id}")
+        res: requests.Response = requests.get(f"{HOST}/{self.route}/{_id}/")
         self.assertEqual(200, res.status_code)
         self.assertTrue(res.json().get('name'), 'Brown Trout')
 
     @classmethod
     def tearDownClass(cls) -> None:
-        for _id in cls.ids:
-            requests.delete(f"{HOST}/{cls.path}/{_id}")
+        clear_db(cls.ids, cls.route)
+
+
+def post_sample(route: str, data: list[dict], ids: list[str]) -> None:
+    for entity in data:
+        res: Response = requests.post(f"{HOST}/{route}/", json=entity)
+        ids.append(res.json().get('_id'))
+
+
+def clear_db(ids: list, route: str) -> None:
+    for _id in ids:
+        requests.delete(f"{HOST}/{route}/{_id}/")
 
 
 def post_data(route: str, data: dict) -> requests.Response:
@@ -257,6 +258,7 @@ def post_data(route: str, data: dict) -> requests.Response:
 
 def find_id_by_param(param: str, value: str, route: str) -> tuple[str, int]:
     """
+    USE WITH CAUTION: may not work as intended with non-unique parameters
     Finds and returns the first item in a collection that matches the provided parameter
     Also returns the status code of the request. Values are returned as tuple.
     """
