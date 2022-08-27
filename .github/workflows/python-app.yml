@@ -36,5 +36,10 @@ jobs:
         flake8 . --count --max-complexity=10 --max-line-length=127 --statistics
     - name: Start MongoDB
       uses: supercharge/mongodb-github-action@1.8.0
+      with:
+        mongodb-version: ${{ matrix.mongodb-version }}
+        mongodb-username: supercharge
+        mongodb-password: FISHTRAK2DEPLOYSECRET
+        mongodb-db: FishTrak
     - name: Run tests 
       run: python3 tests.py
