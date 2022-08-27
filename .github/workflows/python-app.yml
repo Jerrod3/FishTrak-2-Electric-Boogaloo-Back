@@ -41,6 +41,6 @@ jobs:
         mongodb-password: FISHTRAK2DEPLOYSECRET
         mongodb-db: FishTrak
     - name: Start program
-      run: main.py
+      run: python3 main.py
     - name: Run tests 
       run: python3 tests.py
