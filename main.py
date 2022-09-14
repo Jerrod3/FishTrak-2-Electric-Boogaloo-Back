@@ -15,13 +15,14 @@ if os.path.exists('.env'):
     config = dotenv_values(".env")
     ATLAS_URI = config["ATLAS_URI"]
     ATLAS_DB = config["DB_NAME"]
+
 else:
     print("No .env file found. Hopefully the variables exist!")
     ATLAS_URI = os.getenv("ATLAS_URI")
     ATLAS_DB = os.getenv("DB_NAME")
 
-# ATLAS_URI = "mongodb+srv://FishTrak:GulxviwQcpGpk7Xe@cluster0.1kofm.mongodb.net/?retryWrites=true&w=majority"
-# ATLAS_DB = "FishTrak"
+print(f"ATLAS_DB is {ATLAS_DB}")
+print(f"ATLAS_URI is {ATLAS_URI}")
 
 app = FastAPI()
 
