@@ -15,10 +15,14 @@ if os.path.exists('.env'):
     config = dotenv_values(".env")
     ATLAS_URI = config["ATLAS_URI"]
     ATLAS_DB = config["DB_NAME"]
+
 else:
     print("No .env file found. Hopefully the variables exist!")
     ATLAS_URI = os.getenv("ATLAS_URI")
     ATLAS_DB = os.getenv("DB_NAME")
+
+print(f"ATLAS_DB is {ATLAS_DB}")
+print(f"ATLAS_URI is {ATLAS_URI}")
 
 app = FastAPI()
 
@@ -38,8 +42,8 @@ def root_route() -> dict:
 
 @app.on_event("startup")
 def startup_db_client():
-    app.mongodb_client = MongoClient(config["ATLAS_URI"])
-    app.database = app.mongodb_client[config["DB_NAME"]]
+    app.mongodb_client = MongoClient(ATLAS_URI)
+    app.database = app.mongodb_client[ATLAS_DB]
     print("Connected to the MongoDB database!")
 
 
