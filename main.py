@@ -1,12 +1,12 @@
 import uvicorn
-import os
+# import os
 from fastapi import FastAPI, APIRouter
 from pymongo import MongoClient
 from routes.fishermen import router as fishermen_router
 from routes.lures import router as lures_router
 from routes.water_body import router as water_bodies_router
 from routes.species import router as species_router
-from dotenv import dotenv_values
+# from dotenv import dotenv_values
 
 
 # set environmental variables based on location of Secrets
