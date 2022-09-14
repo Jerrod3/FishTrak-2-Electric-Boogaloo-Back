@@ -18,6 +18,8 @@ class FishermanTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
+        startup_db_client()
+
         # make two post requests to give the tests some data to work with
         fisherman_1 = {"first": "Jerrod",
                        "last": "Lepper",
@@ -40,8 +42,8 @@ class FishermanTests(unittest.TestCase):
         for _id in cls.ids:
             client.delete(f'/{cls.route}/{_id}')
 
+        shutdown_db_client()
+
 
 if __name__ == '__main__':
-    startup_db_client()
     unittest.main()
-    shutdown_db_client()

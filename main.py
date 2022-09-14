@@ -10,15 +10,18 @@ from dotenv import dotenv_values
 
 
 # set environmental variables based on location of Secrets
-if os.path.exists('.env'):
-    print("reading from .env file!")
-    config = dotenv_values(".env")
-    ATLAS_URI = config["ATLAS_URI"]
-    ATLAS_DB = config["DB_NAME"]
-else:
-    print("No .env file found. Hopefully the variables exist!")
-    ATLAS_URI = os.getenv("ATLAS_URI")
-    ATLAS_DB = os.getenv("DB_NAME")
+# if os.path.exists('.env'):
+#     print("reading from .env file!")
+#     config = dotenv_values(".env")
+#     ATLAS_URI = config["ATLAS_URI"]
+#     ATLAS_DB = config["DB_NAME"]
+# else:
+#     print("No .env file found. Hopefully the variables exist!")
+#     ATLAS_URI = os.getenv("ATLAS_URI")
+#     ATLAS_DB = os.getenv("DB_NAME")
+
+ATLAS_URI = "mongodb+srv://FishTrak:GulxviwQcpGpk7Xe@cluster0.1kofm.mongodb.net/?retryWrites=true&w=majority"
+ATLAS_DB = "FishTrak"
 
 app = FastAPI()
 
@@ -38,8 +41,8 @@ def root_route() -> dict:
 
 @app.on_event("startup")
 def startup_db_client():
-    app.mongodb_client = MongoClient(config["ATLAS_URI"])
-    app.database = app.mongodb_client[config["DB_NAME"]]
+    app.mongodb_client = MongoClient(ATLAS_URI)
+    app.database = app.mongodb_client[ATLAS_DB]
     print("Connected to the MongoDB database!")
 
 
